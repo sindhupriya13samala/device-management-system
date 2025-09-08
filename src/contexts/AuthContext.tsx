@@ -1,8 +1,7 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { User } from '../types';
 import toast from 'react-hot-toast';
-import { MOCK_ADMIN_USER, MOCK_SUPABASE_USER } from '../lib/mock-data';
 
 interface AuthContextType {
   user: User | null;
@@ -11,7 +10,6 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, role: string) => Promise<void>;
-  demoLogin: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,46 +17,76 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
-  const [loading, setLoading] = useState(false); // Start with loading false
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      // Also set supabaseUser if you have it in local storage
+    }
+    setLoading(false);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     return new Promise((resolve) => {
       setTimeout(() => {
-        const demoEmail = import.meta.env.VITE_DEMO_ADMIN_EMAIL || 'admin@telecom.demo';
-        const demoPassword = import.meta.env.VITE_DEMO_ADMIN_PASSWORD || 'demo123456';
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const foundUser = users.find((u: User) => u.email === email && u.password === password);
 
-        if (email === demoEmail && password === demoPassword) {
-          setUser(MOCK_ADMIN_USER);
-          setSupabaseUser(MOCK_SUPABASE_USER);
-          toast.success('Signed in successfully (Demo Mode)');
+        if (foundUser) {
+          setUser(foundUser);
+          localStorage.setItem('user', JSON.stringify(foundUser));
+          toast.success('Signed in successfully');
           setLoading(false);
           resolve();
         } else {
-          toast.error('Invalid credentials for demo.');
+          toast.error('Invalid credentials.');
           setLoading(false);
           resolve();
         }
-      }, 500); // Simulate network delay
+      }, 500);
     });
   };
 
-  const signUp = async (_email: string, _password: string, _role: string) => {
-    toast.error('Sign up is disabled in frontend-only mode.');
-    return Promise.resolve();
+  const signUp = async (email: string, password: string, role: string) => {
+    setLoading(true);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const existingUser = users.find((u: User) => u.email === email);
+
+        if (existingUser) {
+          toast.error('User with this email already exists.');
+          setLoading(false);
+          resolve();
+        } else {
+          const newUser: User = {
+            id: new Date().toISOString(),
+            email,
+            password, // In a real app, hash this password
+            role: role as 'admin' | 'manager' | 'user',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          users.push(newUser);
+          localStorage.setItem('users', JSON.stringify(users));
+          toast.success('Signed up successfully');
+          setLoading(false);
+          resolve();
+        }
+      }, 500);
+    });
   };
 
   const signOut = async () => {
     setUser(null);
     setSupabaseUser(null);
-    toast.success('Signed out successfully (Demo Mode)');
+    localStorage.removeItem('user');
+    toast.success('Signed out successfully');
     return Promise.resolve();
-  };
-
-  const demoLogin = async () => {
-    const demoEmail = import.meta.env.VITE_DEMO_ADMIN_EMAIL || 'admin@telecom.demo';
-    const demoPassword = import.meta.env.VITE_DEMO_ADMIN_PASSWORD || 'demo123456';
-    await signIn(demoEmail, demoPassword);
   };
 
   const value = {
@@ -68,7 +96,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     signUp,
-    demoLogin,
   };
 
   return (

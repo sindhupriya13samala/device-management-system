@@ -11,6 +11,9 @@ import { LocationsPage } from './pages/LocationsPage';
 import { UtilizationPage } from './pages/UtilizationPage';
 import { AlertsPage } from './pages/AlertsPage';
 import { AdminPage } from './pages/AdminPage';
+import { ManagerPage } from './pages/ManagerPage';
+import { UserPage } from './pages/UserPage';
+import { SignUpPage } from './pages/SignUpPage';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
 
 function App() {
@@ -41,6 +44,7 @@ function App() {
           
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route
               path="/"
@@ -61,6 +65,22 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="manager"
+                element={
+                  <ProtectedRoute allowedRoles={['manager']}>
+                    <ManagerPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="user"
+                element={
+                  <ProtectedRoute allowedRoles={['user']}>
+                    <UserPage />
                   </ProtectedRoute>
                 }
               />

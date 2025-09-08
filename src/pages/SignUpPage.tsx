@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { Wifi, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Wifi, Mail, Lock, Eye, EyeOff, User as UserIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export function LoginPage() {
-  const { user, signIn, loading } = useAuth();
-  const [formData, setFormData] = useState({ email: '', password: '' });
+export function SignUpPage() {
+  const { user, signUp, loading } = useAuth();
+  const [formData, setFormData] = useState({ email: '', password: '', role: 'user' });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (user) {
+    // Redirect based on role after successful sign up
     if (user.role === 'admin') return <Navigate to="/admin" replace />;
     if (user.role === 'manager') return <Navigate to="/manager" replace />;
     if (user.role === 'user') return <Navigate to="/user" replace />;
@@ -21,15 +22,13 @@ export function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      await signIn(formData.email, formData.password);
+      await signUp(formData.email, formData.password, formData.role);
     } catch (error) {
-      // Error handling is done in the signIn function
+      // Error handling is done in the signUp function
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  
 
   if (loading) {
     return (
@@ -47,8 +46,8 @@ export function LoginPage() {
             <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
               <Wifi className="h-8 w-8 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Please Log In</h2>
-             <p className="text-gray-600">please login to Telecom Device Manager</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
+            <p className="text-gray-600">Sign up to get started with Telecom Device Manager</p>
           </div>
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -103,6 +102,28 @@ export function LoginPage() {
                   </button>
                 </div>
               </div>
+
+              <div>
+                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+                  Role
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <UserIcon className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <select
+                    id="role"
+                    required
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  >
+                    <option value="user">User</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -114,24 +135,22 @@ export function LoginPage() {
                 {isSubmitting ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                 ) : (
-                  'Sign In'
+                  'Sign Up'
                 )}
               </button>
-
-              
             </div>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
-              Don't have an account? {' '}
-              <a href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-                Sign Up
+              Already have an account? {' '}
+              <a href="/" className="font-medium text-blue-600 hover:text-blue-500">
+                Sign In
               </a>
             </p>
           </div>
         </div>
-        </div>
-        </div>
+      </div>
+    </div>
   );
 }
